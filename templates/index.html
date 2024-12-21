@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Speech to Text</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        margin: 0;
+        background-color: #f0f0f0;
+      }
+      #output {
+        margin-top: 20px;
+        padding: 20px;
+        width: 80%;
+        height: 200px;
+        border: 2px solid #ccc;
+        background-color: #fff;
+        overflow-y: scroll;
+        white-space: pre-wrap;
+        font-family: monospace;
+      }
+      #startBtn,
+      #stopBtn,
+      #clearBtn {
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+        margin: 5px;
+        border-radius: 5px;
+      }
+      #startBtn {
+        background-color: #4caf50;
+        color: white;
+        border: none;
+      }
+      #stopBtn {
+        background-color: #f44336;
+        color: white;
+        border: none;
+      }
+      #clearBtn {
+        background-color: #2196f3;
+        color: white;
+        border: none;
+      }
+
+      /* Word reveal animation */
+      .word {
+        display: inline-block;
+        opacity: 0;
+        animation: revealWord 0.5s forwards;
+      }
+
+      @keyframes revealWord {
+        0% {
+          opacity: 0;
+        }
+        100% {
+          opacity: 1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Speech to Text</h1>
+    <button id="startBtn">Start Listening</button>
+    <button id="stopBtn" disabled>Stop Listening</button>
+    <button id="clearBtn">Clear</button>
+    <div id="output"></div>
+
+    <script>
+      const startBtn = document.getElementById("startBtn");
+      const stopBtn = document.getElementById("stopBtn");
+      const clearBtn = document.getElementById("clearBtn");
+      const outputDiv = document.getElementById("output");
+
+      let recognition;
+      let fullText = ""; // To keep track of the entire transcribed text
+      let lastIndex = 0; // To keep track of the last index processed
+
+      // Create SpeechRecognition object
+      function setupRecognition() {
+        recognition = new (window.SpeechRecognition ||
+          window.webkitSpeechRecognition)();
+        recognition.continuous = true; // Continuous listening
+        recognition.interimResults = true; // Displaying partial results
+        recognition.lang = "en-US"; // Set language for speech recognition
+
+        recognition.onstart = () => {
+          startBtn.textContent = "Listening...";
+          stopBtn.disabled = false;
+        };
+
+        recognition.onresult = (event) => {
+          let interimTranscript = "";
+          let finalTranscript = "";
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            if (event.results[i].isFinal) {
+              finalTranscript += event.results[i][0].transcript + " ";
+            } else {
+              interimTranscript += event.results[i][0].transcript;
+            }
+          }
+
+          if (finalTranscript.trim() !== "") {
+            fullText += finalTranscript;
+            updateOutput(finalTranscript);
+          }
+        };
+
+        recognition.onend = () => {
+          startBtn.textContent = "Start Listening";
+          stopBtn.disabled = true;
+          startBtn.disabled = false;
+        };
+      }
+
+      // Start listening when the Start button is clicked
+      startBtn.onclick = () => {
+        setupRecognition(); // Set up the recognition when starting
+        recognition.start(); // Start speech recognition
+        startBtn.disabled = true;
+      };
+
+      // Stop listening when the Stop button is clicked
+      stopBtn.onclick = () => {
+        recognition.stop(); // Stop speech recognition
+        startBtn.textContent = "Start Listening";
+        stopBtn.disabled = true;
+        startBtn.disabled = false;
+      };
+
+      // Clear all text when the Clear button is clicked
+      clearBtn.onclick = () => {
+        fullText = ""; // Clear the fullText variable
+        lastIndex = 0; // Reset the last index
+        outputDiv.innerHTML = ""; // Clear the output display
+      };
+
+      // Function to update the output with word-by-word animation
+      function updateOutput(text) {
+        // Split text into words
+        const words = text.trim().split(" ");
+
+        // Add each word to the output with animation
+        words.forEach((word, index) => {
+          const span = document.createElement("span");
+          span.classList.add("word");
+          span.textContent = word + " ";
+          span.style.animationDelay = `${(lastIndex + index) * 0.1}s`; // Delay for each word
+          outputDiv.appendChild(span);
+        });
+
+        lastIndex += words.length; // Update the last index
+      }
+    </script>
+  </body>
+</html>

@@ -1,3 +1,5 @@
+#using googles api to recognize the voice of the user
+
 import speech_recognition as sr
 
 def listen_and_convert():
